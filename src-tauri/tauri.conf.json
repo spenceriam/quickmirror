@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "tauri-app",
-  "version": "0.1.0",
-  "identifier": "com.spenc.tauri-app",
+  "productName": "QuickMirror",
+  "version": "1.0.0",
+  "identifier": "com.quickmirror.app",
   "build": {
     "frontendDist": "../src"
   },
@@ -10,9 +10,14 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "tauri-app",
-        "width": 800,
-        "height": 600
+        "label": "main",
+        "title": "QuickMirror",
+        "width": 320,
+        "height": 300,
+        "resizable": false,
+        "center": true,
+        "visible": false,
+        "skipTaskbar": true
       }
     ],
     "security": {
@@ -21,7 +26,12 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "category": "Utility",
+    "targets": ["msi"],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256"
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -29,5 +39,14 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "updater": {
+    "active": true,
+    "endpoints": ["https://github.com/spenceriam/quickmirror/releases/latest/download/latest.json"],
+    "dialog": true
+  },
+  "systemTray": {
+    "iconPath": "icons/icon.ico",
+    "iconAsTemplate": false
   }
 }
