@@ -1,7 +1,9 @@
 // QuickMirror main TypeScript entry point
 import { CameraManager } from './camera';
+import { AudioManager } from './audio';
 
 let cameraManager: CameraManager | null = null;
+let audioManager: AudioManager | null = null;
 
 // Initialize application when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
@@ -11,6 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const videoElement = document.getElementById('camera-preview') as HTMLVideoElement;
   const closeButton = document.getElementById('close-btn');
   const cameraSelect = document.getElementById('camera-select') as HTMLSelectElement;
+  const micSelect = document.getElementById('mic-select') as HTMLSelectElement;
   
   if (videoElement) {
     // Initialize camera manager
@@ -23,6 +26,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
       console.error('Failed to initialize camera:', error);
     }
+  }
+  
+  // Initialize audio manager for microphone visualization
+  audioManager = new AudioManager();
+  try {
+    await populateMicrophoneDevices();
+    await audioManager.initialize();
+  } catch (error) {
+    console.error('Failed to initialize audio:', error);
   }
   
   // Set up close button (hide to tray behavior)
@@ -45,6 +57,22 @@ document.addEventListener('DOMContentLoaded', async () => {
           await cameraManager.switchCamera(deviceId);
         } catch (error) {
           console.error('Failed to switch camera:', error);
+        }
+      }
+    });
+  }
+  
+  // Set up microphone device selection
+  if (micSelect) {
+    micSelect.addEventListener('change', async (event) => {
+      const target = event.target as HTMLSelectElement;
+      const deviceId = target.value;
+      
+      if (audioManager && deviceId) {
+        try {
+          await audioManager.switchMicrophone(deviceId);
+        } catch (error) {
+          console.error('Failed to switch microphone:', error);
         }
       }
     });
@@ -84,10 +112,46 @@ async function populateCameraDevices(): Promise<void> {
   }
 }
 
+// Populate microphone devices dropdown
+async function populateMicrophoneDevices(): Promise<void> {
+  if (!audioManager) return;
+  
+  const micSelect = document.getElementById('mic-select') as HTMLSelectElement;
+  if (!micSelect) return;
+  
+  try {
+    const devices = await audioManager.getDevices();
+    
+    // Clear existing options
+    micSelect.innerHTML = '';
+    
+    if (devices.length === 0) {
+      const option = document.createElement('option');
+      option.textContent = 'No microphones found';
+      micSelect.appendChild(option);
+      return;
+    }
+    
+    // Add microphone options
+    devices.forEach((device, index) => {
+      const option = document.createElement('option');
+      option.value = device.deviceId;
+      option.textContent = device.label || `Microphone ${index + 1}`;
+      micSelect.appendChild(option);
+    });
+    
+  } catch (error) {
+    console.error('Failed to populate microphone devices:', error);
+  }
+}
+
 // Cleanup function for when window closes/hides
 function cleanup(): void {
   if (cameraManager) {
     cameraManager.stopCamera();
+  }
+  if (audioManager) {
+    audioManager.stop();
   }
 }
 
