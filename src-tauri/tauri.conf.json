@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "identifier": "com.quickmirror.app",
   "build": {
-    "frontendDist": "../src"
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420"
   },
   "app": {
     "withGlobalTauri": true,
@@ -28,6 +29,8 @@
     "active": true,
     "category": "Utility",
     "targets": ["msi"],
+    "shortDescription": "Quick camera/microphone validation before video calls",
+    "longDescription": "QuickMirror is a Windows system tray utility that provides instant camera and microphone validation before video calls. Features real-time camera preview and audio level visualization.",
     "windows": {
       "certificateThumbprint": null,
       "digestAlgorithm": "sha256"
@@ -39,14 +42,5 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
-  },
-  "updater": {
-    "active": true,
-    "endpoints": ["https://github.com/spenceriam/quickmirror/releases/latest/download/latest.json"],
-    "dialog": true
-  },
-  "systemTray": {
-    "iconPath": "icons/icon.ico",
-    "iconAsTemplate": false
   }
 }

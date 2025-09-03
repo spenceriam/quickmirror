@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tauri dev",
-    "build": "tauri build", 
-    "bundle": "tauri build --bundles msi"
+    "dev": "vite dev",
+    "build": "vite build && tauri build",
+    "build:frontend": "vite build",
+    "build:tauri": "tauri build",
+    "bundle": "vite build && tauri build --bundles msi",
+    "tauri:dev": "tauri dev"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0"
