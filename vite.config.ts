@@ -3,6 +3,7 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   root: 'src',
   publicDir: '../public',
+  base: './',
   clearScreen: false,
   server: {
     port: 1420,
