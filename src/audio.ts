@@ -8,6 +8,7 @@ export class AudioManager {
     private animationId: number | null = null;
     private stream: MediaStream | null = null;
     private currentDeviceId: string | null = null;
+    private currentAudioLevel: number = 0;
 
     async initialize(deviceId?: string): Promise<void> {
         try {
@@ -63,6 +64,9 @@ export class AudioManager {
             
             // Convert to percentage (0-100)
             const level = Math.min(100, Math.max(0, (average / 128) * 100));
+            
+            // Store current audio level
+            this.currentAudioLevel = level;
             
             this.updateProgressBar(level);
             
@@ -133,6 +137,10 @@ export class AudioManager {
 
     isActive(): boolean {
         return this.audioContext !== null && this.audioContext.state === 'running';
+    }
+
+    getAudioLevel(): number {
+        return this.currentAudioLevel;
     }
 
     private updateAudioStatus(message: string): void {

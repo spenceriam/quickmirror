@@ -6,35 +6,44 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <span class="title">QuickMirror</span>
-            <button id="close-btn" class="close-btn">×</button>
+    <div class="app-container" id="app-container">
+        <!-- Camera background -->
+        <video id="camera-preview" autoplay muted></video>
+        
+        <!-- Window controls (show on hover) -->
+        <div class="window-controls" id="window-controls">
+            <button id="minimize-btn" class="window-btn minimize-btn" title="Minimize">−</button>
+            <button id="maximize-btn" class="window-btn maximize-btn" title="Maximize">□</button>
+            <button id="close-btn" class="window-btn close-btn" title="Close">×</button>
         </div>
         
-        <div class="camera-section">
-            <video id="camera-preview" autoplay muted></video>
+        <!-- Floating controls overlay -->
+        <div class="controls-overlay">
+            <!-- Audio visualizer -->
+            <div class="audio-visualizer" id="audio-visualizer">
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+            </div>
+            
+            <!-- Device selectors -->
+            <div class="device-controls">
+                <div class="device-control">
+                    <span class="device-label">Webcam device</span>
+                    <select id="camera-select" class="device-select"></select>
+                </div>
+                
+                <div class="device-control">
+                    <span class="device-label">Microphone device</span>
+                    <select id="mic-select" class="device-select"></select>
+                </div>
+            </div>
         </div>
         
-        <div class="controls">
-            <div class="control-row">
-                <label for="camera-select">Camera:</label>
-                <select id="camera-select"></select>
-            </div>
-            
-            <div class="control-row">
-                <label for="mic-select">Microphone:</label>
-                <select id="mic-select"></select>
-            </div>
-            
-            <div class="control-row">
-                <label>Audio:</label>
-                <progress id="audio-level" max="100" value="0"></progress>
-            </div>
-            
-            <div class="status-row">
-                <span id="camera-status">Initializing...</span>
-            </div>
+        <!-- Status indicator -->
+        <div class="status-indicator" id="status-indicator">
+            <span id="camera-status">Initializing...</span>
         </div>
     </div>
     

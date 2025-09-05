@@ -2,6 +2,23 @@
 import { CameraManager } from './camera';
 import { AudioManager } from './audio';
 
+// Declare Electron API types
+declare global {
+  interface Window {
+    electronAPI?: {
+      onQuickCameraTest: (callback: () => void) => void;
+      onQuickMicrophoneTest: (callback: () => void) => void;
+      minimizeToTray: () => void;
+      removeAllListeners: (channel: string) => void;
+    };
+    platform?: {
+      isWindows: boolean;
+      isMac: boolean;
+      isLinux: boolean;
+    };
+  }
+}
+
 let cameraManager: CameraManager | null = null;
 let audioManager: AudioManager | null = null;
 
@@ -11,9 +28,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Get UI elements
   const videoElement = document.getElementById('camera-preview') as HTMLVideoElement;
+  const appContainer = document.getElementById('app-container');
+  const minimizeButton = document.getElementById('minimize-btn');
+  const maximizeButton = document.getElementById('maximize-btn');
   const closeButton = document.getElementById('close-btn');
   const cameraSelect = document.getElementById('camera-select') as HTMLSelectElement;
   const micSelect = document.getElementById('mic-select') as HTMLSelectElement;
+  const statusIndicator = document.getElementById('status-indicator');
+  const audioVisualizer = document.getElementById('audio-visualizer');
+  const visualizerBars = audioVisualizer?.querySelectorAll('.visualizer-bar') as NodeListOf<HTMLElement>;
   
   if (videoElement) {
     // Initialize camera manager
@@ -37,12 +60,61 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Failed to initialize audio:', error);
   }
   
-  // Set up close button (hide to tray behavior)
+  // Set up window controls
+  if (minimizeButton && window.electronAPI) {
+    minimizeButton.addEventListener('click', () => {
+      console.log('Minimize button clicked');
+      cleanup(); // Release devices before hiding
+      window.electronAPI.minimizeToTray();
+    });
+  }
+  
+  if (maximizeButton && window.electronAPI) {
+    maximizeButton.addEventListener('click', () => {
+      console.log('Maximize button clicked');
+      // For now, just hide to tray - could implement actual maximize later
+      window.electronAPI.minimizeToTray();
+    });
+  }
+  
   if (closeButton) {
     closeButton.addEventListener('click', () => {
-      // Note: In full Tauri app, this would hide to system tray
-      console.log('Close button clicked - would hide to tray');
-      window.close();
+      console.log('Close button clicked - hiding to tray');
+      if (window.electronAPI) {
+        window.electronAPI.minimizeToTray();
+      } else {
+        window.close();
+      }
+    });
+  }
+  
+  // Set up audio visualizer
+  if (audioManager && visualizerBars) {
+    startAudioVisualization();
+  }
+  
+  // Set up status indicator behavior
+  if (statusIndicator) {
+    // Show status briefly on initialization
+    statusIndicator.classList.add('show');
+    setTimeout(() => {
+      statusIndicator.classList.remove('show');
+    }, 3000);
+  }
+  
+  // Set up Electron API listeners if available
+  if (window.electronAPI) {
+    console.log('Electron API available - setting up tray listeners');
+    
+    // Listen for system tray quick actions
+    window.electronAPI.onQuickCameraTest(() => {
+      console.log('Quick camera test requested from tray');
+      startCameraTest();
+    });
+    
+    window.electronAPI.onQuickMicrophoneTest(() => {
+      console.log('Quick microphone test requested from tray');
+      startMicrophoneTest();
     });
   }
   
@@ -99,11 +171,23 @@ async function populateCameraDevices(): Promise<void> {
       return;
     }
     
+    // Sort devices - default first
+    const sortedDevices = devices.sort((a, b) => {
+      const aIsDefault = isDefaultDevice(a.label || '');
+      const bIsDefault = isDefaultDevice(b.label || '');
+      if (aIsDefault && !bIsDefault) return -1;
+      if (!aIsDefault && bIsDefault) return 1;
+      return 0;
+    });
+    
     // Add camera options
-    devices.forEach((device, index) => {
+    sortedDevices.forEach((device, index) => {
       const option = document.createElement('option');
       option.value = device.deviceId;
-      option.textContent = device.label || `Camera ${index + 1}`;
+      const deviceName = device.label || `Camera ${index + 1}`;
+      const cleanedName = cleanDeviceName(deviceName);
+      option.textContent = cleanedName; // Cleaned name in dropdown
+      option.title = cleanedName; // Full cleaned name on hover
       cameraSelect.appendChild(option);
     });
     
@@ -132,11 +216,23 @@ async function populateMicrophoneDevices(): Promise<void> {
       return;
     }
     
+    // Sort devices - default first
+    const sortedDevices = devices.sort((a, b) => {
+      const aIsDefault = isDefaultDevice(a.label || '');
+      const bIsDefault = isDefaultDevice(b.label || '');
+      if (aIsDefault && !bIsDefault) return -1;
+      if (!aIsDefault && bIsDefault) return 1;
+      return 0;
+    });
+    
     // Add microphone options
-    devices.forEach((device, index) => {
+    sortedDevices.forEach((device, index) => {
       const option = document.createElement('option');
       option.value = device.deviceId;
-      option.textContent = device.label || `Microphone ${index + 1}`;
+      const deviceName = device.label || `Microphone ${index + 1}`;
+      const cleanedName = cleanDeviceName(deviceName);
+      option.textContent = cleanedName; // Cleaned name in dropdown
+      option.title = cleanedName; // Full cleaned name on hover
       micSelect.appendChild(option);
     });
     
@@ -158,4 +254,82 @@ function cleanup(): void {
 // Set up cleanup on window beforeunload
 window.addEventListener('beforeunload', cleanup);
 
-console.log('QuickMirror main.ts loaded');
+// Helper functions for tray quick actions
+function startCameraTest(): void {
+  if (cameraManager) {
+    console.log('Starting camera test...');
+    cameraManager.startCamera().catch(error => {
+      console.error('Failed to start camera test:', error);
+    });
+  }
+}
+
+function startMicrophoneTest(): void {
+  if (audioManager) {
+    console.log('Starting microphone test...');
+    audioManager.initialize().catch(error => {
+      console.error('Failed to start microphone test:', error);
+    });
+  }
+}
+
+// Audio visualizer function - 4 bars
+function startAudioVisualization(): void {
+  const audioVisualizer = document.getElementById('audio-visualizer');
+  const visualizerBars = audioVisualizer?.querySelectorAll('.visualizer-bar') as NodeListOf<HTMLElement>;
+  
+  if (!visualizerBars || !audioManager) return;
+  
+  function updateVisualizer(): void {
+    if (!audioManager) return;
+    
+    try {
+      // Get audio level from audio manager (0-100)
+      const audioLevel = audioManager.getAudioLevel ? audioManager.getAudioLevel() : 0;
+      
+      // Update visualizer bars based on audio level
+      visualizerBars.forEach((bar, index) => {
+        const threshold = (index + 1) * (100 / visualizerBars.length);
+        const isActive = audioLevel > threshold;
+        
+        if (isActive) {
+          const height = Math.min(24, (audioLevel / 100) * 24 + 4);
+          bar.style.height = `${height}px`;
+          bar.classList.add('active');
+        } else {
+          bar.style.height = '4px';
+          bar.classList.remove('active');
+        }
+      });
+    } catch (error) {
+      // Silently handle errors to avoid spam
+    }
+    
+    requestAnimationFrame(updateVisualizer);
+  }
+  
+  updateVisualizer();
+}
+
+// Utility function to clean device names
+function cleanDeviceName(name: string): string {
+  // Remove "Default - " prefix if present
+  let cleaned = name.replace(/^Default\s*-\s*/i, '');
+  return cleaned.trim();
+}
+
+// Utility function to truncate device names for display
+function truncateDeviceName(name: string, maxLength: number = 20): string {
+  const cleaned = cleanDeviceName(name);
+  if (cleaned.length <= maxLength) {
+    return cleaned;
+  }
+  return cleaned.substring(0, maxLength) + '...';
+}
+
+// Check if device is default
+function isDefaultDevice(name: string): boolean {
+  return name.toLowerCase().includes('default');
+}
+
+console.log('QuickMirror main.ts loaded with Electron support');
