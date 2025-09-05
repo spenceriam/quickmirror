@@ -1,0 +1,218 @@
+name: Build Windows Installers
+
+# Manual trigger only to control costs
+on:
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create GitHub Release'
+        required: false
+        default: 'true'
+        type: boolean
+      version_tag:
+        description: 'Release version tag (e.g., v1.0.0)'
+        required: false
+        default: ''
+        type: string
+      is_prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  ELECTRON_CACHE: ${{ github.workspace }}/.cache/electron
+  ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ia32, x64, arm64]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Create cache directories
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "${{ env.ELECTRON_CACHE }}"
+          New-Item -ItemType Directory -Force -Path "${{ env.ELECTRON_BUILDER_CACHE }}"
+          
+      - name: Cache Electron
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.ELECTRON_CACHE }}
+          key: ${{ runner.os }}-electron-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-
+            
+      - name: Cache electron-builder
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.ELECTRON_BUILDER_CACHE }}
+          key: ${{ runner.os }}-electron-builder-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-builder-
+            
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build frontend
+        run: npm run build:frontend
+        
+      - name: Build Electron app for ${{ matrix.arch }}
+        run: npm run dist -- --win --${{ matrix.arch }} --publish never
+        env:
+          # Disable telemetry for electron-builder
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          
+      - name: List build output
+        shell: pwsh
+        run: |
+          Write-Host "Build output for ${{ matrix.arch }}:"
+          Get-ChildItem -Path "dist-electron" -Recurse | ForEach-Object { Write-Host $_.FullName }
+          
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: quickmirror-${{ matrix.arch }}-installer
+          path: |
+            dist-electron/*.exe
+            dist-electron/*.blockmap
+          retention-days: 30
+          
+      - name: Upload unpacked app (for debugging)
+        if: matrix.arch == 'x64'  # Only upload one unpacked version to save space
+        uses: actions/upload-artifact@v4
+        with:
+          name: quickmirror-unpacked-${{ matrix.arch }}
+          path: dist-electron/win-unpacked/
+          retention-days: 7
+
+  create-release:
+    needs: build
+    runs-on: windows-latest
+    if: ${{ github.event.inputs.create_release == 'true' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          
+      - name: List downloaded artifacts
+        shell: pwsh
+        run: |
+          Write-Host "Downloaded artifacts:"
+          Get-ChildItem -Path "artifacts" -Recurse | ForEach-Object { Write-Host $_.FullName }
+          
+      - name: Determine version
+        id: version
+        shell: pwsh
+        run: |
+          $packageVersion = (Get-Content package.json | ConvertFrom-Json).version
+          $versionTag = "${{ github.event.inputs.version_tag }}"
+          if ([string]::IsNullOrWhiteSpace($versionTag)) {
+            $versionTag = "v$packageVersion"
+          }
+          Write-Host "Version tag: $versionTag"
+          echo "tag=$versionTag" >> $env:GITHUB_OUTPUT
+          echo "name=QuickMirror $versionTag" >> $env:GITHUB_OUTPUT
+          
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          release_name: ${{ steps.version.outputs.name }}
+          draft: false
+          prerelease: ${{ github.event.inputs.is_prerelease == 'true' }}
+          body: |
+            ## QuickMirror Release ${{ steps.version.outputs.tag }}
+            
+            ### Windows Compatibility
+            - **ia32**: Windows 10/11 (32-bit) - Compatible with older systems
+            - **x64**: Windows 10/11 (64-bit) - Intel/AMD processors 
+            - **arm64**: Windows 11 ARM64 - Native ARM performance (Surface Pro X, etc.)
+            
+            ### Installation Notes
+            - Choose the installer matching your system architecture
+            - If unsure, use the **x64** installer (works on most systems)
+            - ARM64 users get better performance with the native **arm64** installer
+            - All versions are backward compatible with Windows 10 version 1903+
+            
+            ### Features
+            - System tray integration
+            - Real-time camera preview
+            - Audio level visualization  
+            - Multiple device support
+            - Quick device testing
+            
+            **Auto-generated release from GitHub Actions**
+            
+      - name: Upload ia32 Installer
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/quickmirror-ia32-installer/QuickMirror-Setup-${{ steps.version.outputs.tag }}-ia32.exe
+          asset_name: QuickMirror-Setup-${{ steps.version.outputs.tag }}-ia32.exe
+          asset_content_type: application/octet-stream
+          
+      - name: Upload x64 Installer
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/quickmirror-x64-installer/QuickMirror-Setup-${{ steps.version.outputs.tag }}-x64.exe
+          asset_name: QuickMirror-Setup-${{ steps.version.outputs.tag }}-x64.exe
+          asset_content_type: application/octet-stream
+          
+      - name: Upload arm64 Installer
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/quickmirror-arm64-installer/QuickMirror-Setup-${{ steps.version.outputs.tag }}-arm64.exe
+          asset_name: QuickMirror-Setup-${{ steps.version.outputs.tag }}-arm64.exe
+          asset_content_type: application/octet-stream
+          
+      - name: Upload Checksums
+        shell: pwsh
+        run: |
+          # Generate checksums for all installers
+          $checksums = @()
+          Get-ChildItem -Path "artifacts" -Filter "*.exe" -Recurse | ForEach-Object {
+            $hash = Get-FileHash -Path $_.FullName -Algorithm SHA256
+            $checksums += "$($hash.Hash.ToLower())  $($_.Name)"
+          }
+          $checksums | Out-File -FilePath "checksums.txt" -Encoding utf8
+          
+      - name: Upload Checksums File
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: checksums.txt
+          asset_name: checksums.txt
+          asset_content_type: text/plain

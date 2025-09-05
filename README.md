@@ -1,6 +1,6 @@
 # 🚀 QuickMirror - Camera/Microphone Validation Utility
 
-QuickMirror is a **Windows system tray utility** built with **Tauri + TypeScript** that provides instant camera and microphone validation before video calls. No more "can you see/hear me?" moments!
+QuickMirror is a **Windows system tray utility** built with **Electron + TypeScript** that provides instant camera and microphone validation before video calls. No more "can you see/hear me?" moments!
 
 ## ✨ Features
 
@@ -31,10 +31,10 @@ QuickMirror is a **Windows system tray utility** built with **Tauri + TypeScript
 ## 🛠️ Tech Stack
 
 - **Frontend**: Vanilla TypeScript + HTML + CSS (no React)
-- **Backend**: Rust with Tauri v2.8.4
-- **Build**: Vite + Tauri MSI bundler
+- **Backend**: Electron v38.0.0 with Node.js integration
+- **Build**: Vite + electron-builder with NSIS installer
 - **Media APIs**: WebRTC getUserMedia + Web Audio API
-- **Target**: Windows 10/11 (x64 + ARM64)
+- **Target**: Windows 10 (1903+) / 11 (ia32, x64, ARM64)
 
 ## 🚀 Quick Start
 
@@ -49,11 +49,18 @@ npm run build:frontend
 # Open dist/index.html in browser to test camera/mic functionality
 ```
 
-### Full Application (Requires Visual Studio Build Tools)
+### Full Application Development
 ```bash
-# Install Visual Studio Build Tools first
-# Then run:
-npm run bundle  # Creates MSI installer
+# Development with hot reload
+npm run dev
+
+# Build and create installers for all architectures
+npm run dist
+
+# Build for specific architecture
+npm run dist -- --win --x64    # 64-bit Intel/AMD
+npm run dist -- --win --arm64  # ARM64 (Surface Pro X, etc.)
+npm run dist -- --win --ia32   # 32-bit (legacy systems)
 ```
 
 ## 📁 Project Structure
@@ -66,10 +73,9 @@ quickmirror/
 │   ├── camera.ts           # CameraManager class
 │   ├── audio.ts            # AudioManager with Web Audio API
 │   └── style.css           # Professional styling
-├── src-tauri/              # Rust backend
-│   ├── src/main.rs         # System tray + window management
-│   ├── Cargo.toml          # Rust dependencies
-│   └── tauri.conf.json     # MSI bundler configuration
+├── electron/               # Electron backend
+│   ├── main.cjs            # System tray + window management
+│   └── preload.cjs         # Context bridge for security
 ├── dist/                   # Production build output
 └── WARP.md                 # AI development guidance
 ```
@@ -94,13 +100,28 @@ quickmirror/
 - ✅ Professional blue header + clean layout
 - ✅ Complete resource management
 
-## 🔧 Installation Requirements
+## 💻 Windows Compatibility
 
-To build the full MSI installer, you need:
-1. **Node.js** (✅ Installed)
-2. **Rust toolchain** (✅ Installed - v1.89.0 ARM64)
-3. **Tauri CLI** (✅ Installed - v2.8.4)
-4. **Visual Studio Build Tools** (🚧 Required for MSI generation)
+### Supported Versions
+- **Windows 10** (version 1903+) - All architectures
+- **Windows 11** - All versions and SKUs
+
+### Architecture Support
+- **ia32**: Windows 10/11 (32-bit) - Compatible with older systems
+- **x64**: Windows 10/11 (64-bit) - Intel/AMD processors (most common)
+- **arm64**: Windows 11 ARM64 - Native ARM performance (Surface Pro X, etc.)
+
+### Installation Notes
+- If unsure about your architecture, use the **x64** installer
+- ARM64 users get better performance with the native **arm64** build
+- x64 installer also works on ARM64 via emulation (with some performance cost)
+
+## 🔧 Development Requirements
+
+To build installers locally:
+1. **Node.js 20+** (✅ Required for development)
+2. **Windows SDK** (✅ For native Windows features)
+3. **No additional tools needed** (electron-builder handles everything)
 
 ## 📊 Performance Metrics
 
@@ -117,7 +138,8 @@ To build the full MSI installer, you need:
 - ✅ Complete error handling for all scenarios
 - ✅ Resource cleanup on window close/hide
 - ✅ Frontend builds successfully for distribution
-- ✅ MSI bundler configured (pending VS Build Tools)
+- ✅ NSIS installer for multiple architectures configured
+- ✅ GitHub Actions CI/CD for automated releases
 
 ---
 
