@@ -72,7 +72,7 @@ jobs:
         run: npm run build:frontend
         
       - name: Build Electron app for ${{ matrix.arch }}
-        run: npm run dist -- --win --${{ matrix.arch }} --publish never
+        run: npx electron-builder --win --${{ matrix.arch }} --publish never
         env:
           # Disable telemetry for electron-builder
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
@@ -130,8 +130,10 @@ jobs:
             $versionTag = "v$packageVersion"
           }
           Write-Host "Version tag: $versionTag"
+          Write-Host "Package version: $packageVersion"
           echo "tag=$versionTag" >> $env:GITHUB_OUTPUT
           echo "name=QuickMirror $versionTag" >> $env:GITHUB_OUTPUT
+          echo "package_version=$packageVersion" >> $env:GITHUB_OUTPUT
           
       - name: Create Release
         id: create_release
@@ -172,8 +174,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/quickmirror-ia32-installer/QuickMirror-Setup-${{ steps.version.outputs.tag }}-ia32.exe
-          asset_name: QuickMirror-Setup-${{ steps.version.outputs.tag }}-ia32.exe
+          asset_path: artifacts/quickmirror-ia32-installer/QuickMirror-Setup-${{ steps.version.outputs.package_version }}-ia32.exe
+          asset_name: QuickMirror-Setup-${{ steps.version.outputs.package_version }}-ia32.exe
           asset_content_type: application/octet-stream
           
       - name: Upload x64 Installer
@@ -182,8 +184,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/quickmirror-x64-installer/QuickMirror-Setup-${{ steps.version.outputs.tag }}-x64.exe
-          asset_name: QuickMirror-Setup-${{ steps.version.outputs.tag }}-x64.exe
+          asset_path: artifacts/quickmirror-x64-installer/QuickMirror-Setup-${{ steps.version.outputs.package_version }}-x64.exe
+          asset_name: QuickMirror-Setup-${{ steps.version.outputs.package_version }}-x64.exe
           asset_content_type: application/octet-stream
           
       - name: Upload arm64 Installer
@@ -192,8 +194,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/quickmirror-arm64-installer/QuickMirror-Setup-${{ steps.version.outputs.tag }}-arm64.exe
-          asset_name: QuickMirror-Setup-${{ steps.version.outputs.tag }}-arm64.exe
+          asset_path: artifacts/quickmirror-arm64-installer/QuickMirror-Setup-${{ steps.version.outputs.package_version }}-arm64.exe
+          asset_name: QuickMirror-Setup-${{ steps.version.outputs.package_version }}-arm64.exe
           asset_content_type: application/octet-stream
           
       - name: Upload Checksums

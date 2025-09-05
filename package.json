@@ -62,14 +62,7 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "artifactName": "${productName}-Setup-${version}-${arch}.${ext}"
-    },
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "spenceriam",
-        "repo": "quickmirror"
-      }
-    ]
+    }
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.1"
