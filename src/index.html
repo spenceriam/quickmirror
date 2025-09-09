@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>QuickMirror</title>
+    <title>QuikMirror</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,6 +12,13 @@
         
         <!-- Window controls (show on hover) -->
         <div class="window-controls" id="window-controls">
+            <button id="anchor-btn" class="window-btn anchor-btn" title="Anchor to bottom-right corner" aria-label="Anchor window">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 2L13.09 8.26L22 7L20.74 9.74L15.26 13.09L12 2Z" fill="white"/>
+                    <circle cx="6" cy="18" r="3" fill="white"/>
+                    <path d="M14 14L22 22" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
             <button id="minimize-btn" class="window-btn minimize-btn" title="Minimize" aria-label="Minimize">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="2" rx="1" fill="white"/></svg>
             </button>

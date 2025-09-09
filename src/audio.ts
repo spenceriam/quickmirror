@@ -1,4 +1,4 @@
-// AudioManager class for QuickMirror - handles audio visualization and microphone management
+// AudioManager class for QuikMirror - handles audio visualization and microphone management
 
 export class AudioManager {
     private audioContext: AudioContext | null = null;

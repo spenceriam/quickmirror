@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="128" cy="128" r="118" fill="#10B981" stroke="#059669" stroke-width="4"/>
+  
+  <!-- Q Letter -->
+  <g transform="translate(40,80)">
+    <!-- Q circle -->
+    <circle cx="35" cy="48" r="30" stroke="white" stroke-width="8" fill="none"/>
+    <!-- Q tail -->
+    <line x1="55" y1="68" x2="75" y2="88" stroke="white" stroke-width="8" stroke-linecap="round"/>
+  </g>
+  
+  <!-- M Letter -->
+  <g transform="translate(130,80)">
+    <!-- Left leg -->
+    <line x1="5" y1="20" x2="5" y2="88" stroke="white" stroke-width="8" stroke-linecap="round"/>
+    <!-- Right leg -->
+    <line x1="85" y1="20" x2="85" y2="88" stroke="white" stroke-width="8" stroke-linecap="round"/>
+    <!-- Left diagonal -->
+    <line x1="5" y1="20" x2="45" y2="60" stroke="white" stroke-width="8" stroke-linecap="round"/>
+    <!-- Right diagonal -->
+    <line x1="85" y1="20" x2="45" y2="60" stroke="white" stroke-width="8" stroke-linecap="round"/>
+  </g>
+</svg>
