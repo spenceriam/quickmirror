@@ -22,7 +22,7 @@ declare global {
   }
 }
 let cameraManager: CameraManager | null = null;
-let isAnchored = false; // Track anchor state in renderer
+let isAnchored = true; // Start anchored to match backend
 let anchorButton: HTMLButtonElement | null = null;
 
 // Initialize application when DOM is loaded

@@ -96,9 +96,10 @@ function setAnchorState(anchored) {
   }
   
   // Notify renderer process
-  mainWindow.webContents.send('anchor-state-changed', anchored);
+  if (mainWindow && mainWindow.webContents) {
+    mainWindow.webContents.send('anchor-state-changed', anchored);
+  }
 }
-let isAnchored = false; // Track anchor state
 
 const createWindow = () => {
   // Create the browser window.
@@ -116,9 +117,10 @@ const createWindow = () => {
       preload: path.join(__dirname, 'preload.cjs')
     },
     icon: path.join(__dirname, '../src-tauri/icons/icon.ico'),
-    show: true, // Always show for testing
+    show: false, // Don't show until positioned
     skipTaskbar: true, // Don't show in taskbar initially
     resizable: true,
+    center: false, // Don't center the window
     roundedCorners: true, // Windows 11 rounded corners
     titleBarStyle: 'hidden' // Hide title bar but keep window controls
   });
@@ -147,31 +149,15 @@ const createWindow = () => {
     mainWindow.setSkipTaskbar(true);
   });
   
-  // Listen for display changes to reposition anchored window
-  const { screen } = require('electron');
-  screen.on('display-metrics-changed', () => {
-    if (isAnchored && mainWindow && mainWindow.isVisible()) {
-      console.log('Display metrics changed, repositioning anchored window');
-      setTimeout(() => positionToBottomRight(), 100); // Small delay to ensure screen metrics are updated
-    }
-  });
-  
-  screen.on('display-added', () => {
-    if (isAnchored && mainWindow && mainWindow.isVisible()) {
-      setTimeout(() => positionToBottomRight(), 100);
-    }
-  });
-  
-  screen.on('display-removed', () => {
-    if (isAnchored && mainWindow && mainWindow.isVisible()) {
-      setTimeout(() => positionToBottomRight(), 100);
-    }
-  });
-  
   // Position window at bottom-right on startup (anchored by default)
   mainWindow.once('ready-to-show', () => {
-    positionWindowBottomRight();
-    mainWindow.setMovable(false); // Start as non-movable since anchored
+    // Small delay to ensure window is fully initialized
+    setTimeout(() => {
+      positionWindowBottomRight();
+      mainWindow.setMovable(false); // Start as non-movable since anchored
+      mainWindow.show(); // Show window after positioning
+      console.log('Window positioned at bottom-right, anchored, and shown');
+    }, 100);
   });
 };
 
@@ -243,39 +229,23 @@ app.whenReady().then(() => {
   
   // Listen for display changes to reposition anchored window
   screen.on('display-added', () => {
-    if (isAnchored) {
+    if (isAnchored && mainWindow) {
       setTimeout(() => positionWindowBottomRight(), 100);
     }
   });
   
   screen.on('display-removed', () => {
-    if (isAnchored) {
+    if (isAnchored && mainWindow) {
       setTimeout(() => positionWindowBottomRight(), 100);
     }
   });
   
   screen.on('display-metrics-changed', () => {
-    if (isAnchored) {
+    if (isAnchored && mainWindow) {
       setTimeout(() => positionWindowBottomRight(), 100);
     }
   });
   
-  // Register global hotkey CTRL+SHIFT+Q
-  const registered = globalShortcut.register('CommandOrControl+Shift+Q', () => {
-    if (mainWindow) {
-      if (mainWindow.isVisible()) {
-        mainWindow.hide();
-      } else {
-        mainWindow.show();
-        mainWindow.focus();
-      }
-    }
-  });
-  
-  if (!registered) {
-    console.error('Global shortcut registration failed');
-  }
-
   // IPC handlers for window controls
   ipcMain.on('minimize-to-tray', () => {
     if (mainWindow) mainWindow.hide();
@@ -302,57 +272,6 @@ app.whenReady().then(() => {
   
   ipcMain.on('reset-position', () => {
     positionWindowCenter();
-  });
-  
-  // Anchor functionality IPC handlers
-  ipcMain.on('set-anchor-state', (event, anchored) => {
-    setAnchorState(anchored);
-  });
-  
-  ipcMain.on('get-anchor-state', (event) => {
-    event.reply('anchor-state-response', isAnchored);
-  });
-  
-  ipcMain.on('reset-position', () => {
-    positionWindowCenter();
-  });
-  
-  // IPC handlers for anchor operations
-  ipcMain.on('set-anchor-state', (event, anchored) => {
-    isAnchored = anchored;
-    console.log('Anchor state changed:', isAnchored);
-    
-    if (mainWindow) {
-      if (isAnchored) {
-        positionToBottomRight();
-        // Disable window dragging when anchored
-        mainWindow.setMovable(false);
-      } else {
-        // Re-enable window dragging when unanchored
-        mainWindow.setMovable(true);
-      }
-    }
-  });
-  
-  ipcMain.on('get-anchor-state', (event) => {
-    event.reply('anchor-state-response', isAnchored);
-  });
-  
-  ipcMain.on('reset-position', () => {
-    if (mainWindow) {
-      // Reset to center of screen
-      const { screen } = require('electron');
-      const primaryDisplay = screen.getPrimaryDisplay();
-      const { width, height } = primaryDisplay.workAreaSize;
-      const windowBounds = mainWindow.getBounds();
-      mainWindow.setPosition(
-        Math.floor((width - windowBounds.width) / 2),
-        Math.floor((height - windowBounds.height) / 2)
-      );
-      // Unanchor when resetting position
-      isAnchored = false;
-      mainWindow.webContents.send('anchor-state-changed', false);
-    }
   });
 
   app.on('activate', () => {
