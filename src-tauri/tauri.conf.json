@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "QuickMirror",
+  "productName": "QuikMirror",
   "version": "1.0.0",
-  "identifier": "com.quickmirror.app",
+  "identifier": "com.quikmirror.app",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420"
@@ -12,7 +12,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "QuickMirror",
+        "title": "QuikMirror",
         "width": 320,
         "height": 300,
         "resizable": false,
@@ -30,7 +30,7 @@
     "category": "Utility",
     "targets": ["msi"],
     "shortDescription": "Quick camera/microphone validation before video calls",
-    "longDescription": "QuickMirror is a Windows system tray utility that provides instant camera and microphone validation before video calls. Features real-time camera preview and audio level visualization.",
+    "longDescription": "QuikMirror is a Windows system tray utility that provides instant camera and microphone validation before video calls. Features real-time camera preview and audio level visualization.",
     "windows": {
       "certificateThumbprint": null,
       "digestAlgorithm": "sha256"

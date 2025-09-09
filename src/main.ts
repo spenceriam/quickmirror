@@ -1,4 +1,4 @@
-// QuickMirror main TypeScript entry point
+// QuikMirror main TypeScript entry point
 import { CameraManager } from './camera';
 
 // Declare Electron API types
@@ -8,6 +8,10 @@ declare global {
       minimizeToTray: () => void;
       maximizeWindow: () => void;
       closeWindow: () => void;
+      setAnchorState: (anchored: boolean) => void;
+      getAnchorState: () => Promise<boolean>;
+      resetPosition: () => void;
+      onAnchorStateChanged: (callback: (anchored: boolean) => void) => void;
       removeAllListeners: (channel: string) => void;
     };
     platform?: {
@@ -17,12 +21,13 @@ declare global {
     };
   }
 }
-
 let cameraManager: CameraManager | null = null;
+let isAnchored = false; // Track anchor state in renderer
+let anchorButton: HTMLButtonElement | null = null;
 
 // Initialize application when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('QuickMirror initializing...');
+  console.log('QuikMirror initializing...');
   
   // Get UI elements
   const videoElement = document.getElementById('camera-preview') as HTMLVideoElement;
@@ -32,6 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const closeButton = document.getElementById('close-btn');
   const cameraSelect = document.getElementById('camera-select') as HTMLSelectElement;
   const statusIndicator = document.getElementById('status-indicator');
+  anchorButton = document.getElementById('anchor-btn') as HTMLButtonElement;
   
   if (videoElement) {
     // Initialize camera manager
@@ -46,8 +52,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
   
-  
-  // Set up window controls
   if (minimizeButton && window.electronAPI) {
     minimizeButton.addEventListener('click', () => {
       console.log('Minimize button clicked');
@@ -74,6 +78,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
   
+  // Set up anchor button
+  if (anchorButton && window.electronAPI) {
+    anchorButton.addEventListener('click', async () => {
+      console.log('Anchor button clicked');
+      const newAnchorState = !isAnchored;
+      window.electronAPI.setAnchorState(newAnchorState);
+    });
+    
+    // Initialize anchor state from main process
+    try {
+      isAnchored = await window.electronAPI.getAnchorState();
+      updateAnchorButtonState();
+    } catch (error) {
+      console.error('Failed to get initial anchor state:', error);
+    }
+    
+    // Listen for anchor state changes from main process
+    window.electronAPI.onAnchorStateChanged((anchored) => {
+      isAnchored = anchored;
+      updateAnchorButtonState();
+    });
+  }
   
   // Set up status indicator behavior (hidden by default)
   if (statusIndicator) {
@@ -342,6 +368,177 @@ function ensureCustomSelect(select: HTMLSelectElement, onSelect: (value: string)
   if (select.id === 'camera-select') {
     if (!cameraDropdown) cameraDropdown = new CustomSelect(select, onSelect);
     else cameraDropdown.refresh();
+  }
+}
+
+// Helper function to update anchor button visual state
+function updateAnchorButtonState(): void {
+  const appContainer = document.getElementById('app-container');
+  
+  if (!anchorButton || !appContainer) return;
+  
+  if (isAnchored) {
+    anchorButton.classList.add('anchored');
+    anchorButton.title = 'Unanchor from bottom-right corner';
+    appContainer.classList.add('anchored');
+  } else {
+    anchorButton.classList.remove('anchored');
+    anchorButton.title = 'Anchor to bottom-right corner';
+    appContainer.classList.remove('anchored');
+  }
+}
+
+// Helper function to position window to bottom-right
+function positionToBottomRight(): void {
+  // This will be handled by the main process based on anchor state
+  // For now, just update the visual state
+  console.log('Positioning to bottom-right');
+}
+
+// Context menu implementation
+function showContextMenu(x: number, y: number): void {
+  // Remove any existing context menu
+  const existingMenu = document.querySelector('.context-menu');
+  if (existingMenu) {
+    existingMenu.remove();
+  }
+  
+  // Create context menu
+  const menu = document.createElement('div');
+  menu.className = 'context-menu';
+  menu.style.position = 'fixed';
+  menu.style.left = `${x}px`;
+  menu.style.top = `${y}px`;
+  menu.style.backgroundColor = 'rgba(40, 40, 40, 0.95)';
+  menu.style.border = '1px solid #555';
+  menu.style.borderRadius = '4px';
+  menu.style.padding = '4px 0';
+  menu.style.minWidth = '120px';
+  menu.style.zIndex = '10000';
+  menu.style.fontSize = '13px';
+  menu.style.color = 'white';
+  menu.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  menu.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+  
+  // Anchor/Unanchor menu item
+  const anchorItem = document.createElement('div');
+  anchorItem.className = 'context-menu-item';
+  anchorItem.textContent = isAnchored ? 'Unanchor' : 'Anchor';
+  anchorItem.style.padding = '6px 12px';
+  anchorItem.style.cursor = 'pointer';
+  anchorItem.style.transition = 'background-color 0.1s';
+  
+  anchorItem.addEventListener('mouseenter', () => {
+    anchorItem.style.backgroundColor = 'rgba(100, 100, 100, 0.8)';
+  });
+  anchorItem.addEventListener('mouseleave', () => {
+    anchorItem.style.backgroundColor = '';
+  });
+  
+  anchorItem.addEventListener('click', () => {
+    if (window.electronAPI) {
+      const newAnchorState = !isAnchored;
+      isAnchored = newAnchorState;
+      window.electronAPI.setAnchorState(isAnchored);
+      updateAnchorButtonState();
+      
+      if (isAnchored) {
+        positionToBottomRight();
+      } else {
+        window.electronAPI.resetPosition();
+      }
+    }
+    menu.remove();
+  });
+  
+  // Reset position menu item
+  const resetItem = document.createElement('div');
+  resetItem.className = 'context-menu-item';
+  resetItem.textContent = 'Reset Position';
+  resetItem.style.padding = '6px 12px';
+  resetItem.style.cursor = 'pointer';
+  resetItem.style.transition = 'background-color 0.1s';
+  
+  resetItem.addEventListener('mouseenter', () => {
+    resetItem.style.backgroundColor = 'rgba(100, 100, 100, 0.8)';
+  });
+  resetItem.addEventListener('mouseleave', () => {
+    resetItem.style.backgroundColor = '';
+  });
+  
+  resetItem.addEventListener('click', () => {
+    if (window.electronAPI) {
+      window.electronAPI.resetPosition();
+      // The anchor state will be updated by the main process
+    }
+    menu.remove();
+  });
+  
+  menu.appendChild(anchorItem);
+  menu.appendChild(resetItem);
+  document.body.appendChild(menu);
+  
+  // Close menu when clicking outside
+  const closeMenu = (e: MouseEvent) => {
+    if (!menu.contains(e.target as Node)) {
+      menu.remove();
+      document.removeEventListener('click', closeMenu);
+    }
+  };
+  
+  // Delay to prevent immediate closing
+  setTimeout(() => {
+    document.addEventListener('click', closeMenu);
+  }, 0);
+}
+
+// Anchor state management functions
+async function initializeAnchorState(): Promise<void> {
+  if (!window.electronAPI) return;
+  
+  try {
+    // Get initial anchor state from main process
+    isAnchored = await window.electronAPI.getAnchorState();
+    updateAnchorUI();
+    
+    // Listen for anchor state changes
+    window.electronAPI.onAnchorStateChanged((anchored: boolean) => {
+      isAnchored = anchored;
+      updateAnchorUI();
+    });
+  } catch (error) {
+    console.error('Failed to initialize anchor state:', error);
+  }
+}
+
+async function toggleAnchorState(): Promise<void> {
+  if (!window.electronAPI) return;
+  
+  try {
+    const newState = !isAnchored;
+    window.electronAPI.setAnchorState(newState);
+    // State will be updated via the onAnchorStateChanged callback
+  } catch (error) {
+    console.error('Failed to toggle anchor state:', error);
+  }
+}
+
+function updateAnchorUI(): void {
+  const appContainer = document.getElementById('app-container');
+  const anchorButton = document.getElementById('anchor-btn');
+  
+  if (!appContainer || !anchorButton) return;
+  
+  if (isAnchored) {
+    // Window is anchored
+    anchorButton.classList.add('anchored');
+    anchorButton.title = 'Unanchor from bottom-right corner';
+    appContainer.classList.add('anchored');
+  } else {
+    // Window is not anchored
+    anchorButton.classList.remove('anchored');
+    anchorButton.title = 'Anchor to bottom-right corner';
+    appContainer.classList.remove('anchored');
   }
 }
 

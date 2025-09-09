@@ -1,5 +1,5 @@
 {
-  "name": "quickmirror",
+  "name": "quikmirror",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
@@ -17,7 +17,7 @@
     "typescript": "^5.0.0",
     "vite": "^5.0.0"
   },
-  "description": "QuickMirror is a **Windows system tray utility** built with **Tauri + TypeScript** that provides instant camera and microphone validation before video calls. No more \"can you see/hear me?\" moments!",
+  "description": "QuikMirror is a **Windows system tray utility** built with **Tauri + TypeScript** that provides instant camera and microphone validation before video calls. No more \"can you see/hear me?\" moments!",
   "main": "electron/main.cjs",
   "repository": {
     "type": "git",
@@ -31,8 +31,8 @@
   },
   "homepage": "https://github.com/spenceriam/quickmirror#readme",
   "build": {
-    "appId": "com.quickmirror.app",
-    "productName": "QuickMirror",
+    "appId": "com.quikmirror.app",
+    "productName": "QuikMirror",
     "directories": {
       "output": "dist-electron"
     },

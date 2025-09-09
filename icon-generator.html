@@ -1,0 +1,135 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QuikMirror Icon Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .icon-size { margin: 20px 0; }
+        canvas { border: 1px solid #ccc; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>QuikMirror Icon Generator</h1>
+    <p>Instructions:</p>
+    <ol>
+        <li>Right-click on each canvas below</li>
+        <li>Save as PNG with the corresponding filename</li>
+        <li>Place files in the src-tauri/icons/ directory</li>
+    </ol>
+    
+    
+        <div class="icon-size">
+            <h3>16x16 - Save as: 16x16.png</h3>
+            <canvas id="canvas16" width="16" height="16"></canvas>
+        </div>
+    
+        <div class="icon-size">
+            <h3>32x32 - Save as: 32x32.png</h3>
+            <canvas id="canvas32" width="32" height="32"></canvas>
+        </div>
+    
+        <div class="icon-size">
+            <h3>44x44 - Save as: 44x44.png</h3>
+            <canvas id="canvas44" width="44" height="44"></canvas>
+        </div>
+    
+        <div class="icon-size">
+            <h3>89x89 - Save as: 89x89.png</h3>
+            <canvas id="canvas89" width="89" height="89"></canvas>
+        </div>
+    
+        <div class="icon-size">
+            <h3>107x107 - Save as: 107x107.png</h3>
+            <canvas id="canvas107" width="107" height="107"></canvas>
+        </div>
+    
+        <div class="icon-size">
+            <h3>128x128 - Save as: 128x128.png</h3>
+            <canvas id="canvas128" width="128" height="128"></canvas>
+        </div>
+    
+        <div class="icon-size">
+            <h3>142x142 - Save as: 142x142.png</h3>
+            <canvas id="canvas142" width="142" height="142"></canvas>
+        </div>
+    
+        <div class="icon-size">
+            <h3>150x150 - Save as: 150x150.png</h3>
+            <canvas id="canvas150" width="150" height="150"></canvas>
+        </div>
+    
+        <div class="icon-size">
+            <h3>256x256 - Save as: 256x256.png</h3>
+            <canvas id="canvas256" width="256" height="256"></canvas>
+        </div>
+    
+        <div class="icon-size">
+            <h3>284x284 - Save as: 284x284.png</h3>
+            <canvas id="canvas284" width="284" height="284"></canvas>
+        </div>
+    
+        <div class="icon-size">
+            <h3>310x310 - Save as: 310x310.png</h3>
+            <canvas id="canvas310" width="310" height="310"></canvas>
+        </div>
+    
+    
+    <script>
+        const svgString = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="128" cy="128" r="118" fill="#10B981" stroke="#059669" stroke-width="4"/>
+  
+  <!-- Q Letter -->
+  <g transform="translate(40,80)">
+    <!-- Q circle -->
+    <circle cx="35" cy="48" r="30" stroke="white" stroke-width="8" fill="none"/>
+    <!-- Q tail -->
+    <line x1="55" y1="68" x2="75" y2="88" stroke="white" stroke-width="8" stroke-linecap="round"/>
+  </g>
+  
+  <!-- M Letter -->
+  <g transform="translate(130,80)">
+    <!-- Left leg -->
+    <line x1="5" y1="20" x2="5" y2="88" stroke="white" stroke-width="8" stroke-linecap="round"/>
+    <!-- Right leg -->
+    <line x1="85" y1="20" x2="85" y2="88" stroke="white" stroke-width="8" stroke-linecap="round"/>
+    <!-- Left diagonal -->
+    <line x1="5" y1="20" x2="45" y2="60" stroke="white" stroke-width="8" stroke-linecap="round"/>
+    <!-- Right diagonal -->
+    <line x1="85" y1="20" x2="45" y2="60" stroke="white" stroke-width="8" stroke-linecap="round"/>
+  </g>
+</svg>`;
+        
+        function drawIconAtSize(size) {
+            const canvas = document.getElementById('canvas' + size);
+            const ctx = canvas.getContext('2d');
+            
+            const img = new Image();
+            const svgBlob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
+            const url = URL.createObjectURL(svgBlob);
+            
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, size, size);
+                URL.revokeObjectURL(url);
+            };
+            
+            img.src = url;
+        }
+        
+        // Draw all icon sizes
+        drawIconAtSize(16);
+        drawIconAtSize(32);
+        drawIconAtSize(44);
+        drawIconAtSize(89);
+        drawIconAtSize(107);
+        drawIconAtSize(128);
+        drawIconAtSize(142);
+        drawIconAtSize(150);
+        drawIconAtSize(256);
+        drawIconAtSize(284);
+        drawIconAtSize(310);
+    </script>
+</body>
+</html>

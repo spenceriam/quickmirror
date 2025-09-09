@@ -1,4 +1,4 @@
-// CameraManager class for QuickMirror - handles camera device access and management
+// CameraManager class for QuikMirror - handles camera device access and management
 
 export class CameraManager {
     private video: HTMLVideoElement;
