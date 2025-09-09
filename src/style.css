@@ -1,4 +1,4 @@
-/* QuickMirror - Overlay UI Design */
+/* QuikMirror - Overlay UI Design */
 * {
   margin: 0;
   padding: 0;
@@ -26,6 +26,12 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   cursor: move;
   -webkit-app-region: drag;
+}
+
+/* Disable dragging when anchored */
+.app-container.anchored {
+  cursor: default;
+  -webkit-app-region: no-drag;
 }
 
 /* Camera Background */
@@ -77,8 +83,27 @@ body {
 
 .minimize-btn:hover,
 .maximize-btn:hover,
-.close-btn:hover {
+.close-btn:hover,
+.anchor-btn:hover {
   background: rgba(0, 0, 0, 0.8);
+}
+
+/* Anchor button specific styling */
+.anchor-btn {
+  transition: all 0.2s ease;
+}
+
+.anchor-btn.anchored {
+  background: rgba(34, 197, 94, 0.8) !important; /* Green when anchored */
+}
+
+.anchor-btn.anchored:hover {
+  background: rgba(34, 197, 94, 0.9) !important;
+}
+
+.anchor-btn.anchored svg {
+  fill: white;
+  stroke: white;
 }
 
 .window-btn:hover {

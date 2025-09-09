@@ -1,6 +1,6 @@
-# 🚀 QuickMirror - Camera/Microphone Validation Utility
+# 🚀 QuikMirror - Camera/Microphone Validation Utility
 
-QuickMirror is a **Windows system tray utility** built with **Electron + TypeScript** that provides instant camera and microphone validation before video calls. No more "can you see/hear me?" moments!
+QuikMirror is a **Windows system tray utility** built with **Electron + TypeScript** that provides instant camera and microphone validation before video calls. No more "can you see/hear me?" moments!
 
 ## ✨ Features
 

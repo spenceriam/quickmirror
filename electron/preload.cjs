@@ -13,6 +13,24 @@ contextBridge.exposeInMainWorld('electronAPI', {
   closeWindow: () => {
     ipcRenderer.send('close-window');
   },
+  // Anchor operations
+  setAnchorState: (anchored) => {
+    ipcRenderer.send('set-anchor-state', anchored);
+  },
+  getAnchorState: () => {
+    return new Promise((resolve) => {
+      ipcRenderer.once('anchor-state-response', (event, anchored) => {
+        resolve(anchored);
+      });
+      ipcRenderer.send('get-anchor-state');
+    });
+  },
+  resetPosition: () => {
+    ipcRenderer.send('reset-position');
+  },
+  onAnchorStateChanged: (callback) => {
+    ipcRenderer.on('anchor-state-changed', (event, anchored) => callback(anchored));
+  },
   // Remove listeners
   removeAllListeners: (channel) => {
     ipcRenderer.removeAllListeners(channel);
