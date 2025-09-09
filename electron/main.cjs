@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, nativeImage } = require('electron');
+const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain } = require('electron');
 const path = require('path');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -99,25 +99,6 @@ const createTray = () => {
     },
     { type: 'separator' },
     {
-      label: 'Quick Camera Test',
-      click: () => {
-        mainWindow.show();
-        mainWindow.focus();
-        // Send message to renderer to start camera test
-        mainWindow.webContents.send('quick-camera-test');
-      }
-    },
-    {
-      label: 'Quick Microphone Test',
-      click: () => {
-        mainWindow.show();
-        mainWindow.focus();
-        // Send message to renderer to start microphone test
-        mainWindow.webContents.send('quick-microphone-test');
-      }
-    },
-    { type: 'separator' },
-    {
       label: 'Quit',
       click: () => {
         app.isQuiting = true;
@@ -143,6 +124,21 @@ const createTray = () => {
 app.whenReady().then(() => {
   createWindow();
   createTray();
+
+  // IPC handlers for window controls
+  ipcMain.on('minimize-to-tray', () => {
+    if (mainWindow) mainWindow.hide();
+  });
+
+  ipcMain.on('maximize-window', () => {
+    if (!mainWindow) return;
+    if (mainWindow.isMaximized()) mainWindow.unmaximize();
+    else mainWindow.maximize();
+  });
+
+  ipcMain.on('close-window', () => {
+    if (mainWindow) mainWindow.hide();
+  });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

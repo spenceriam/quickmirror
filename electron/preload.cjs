@@ -3,19 +3,16 @@ const { contextBridge, ipcRenderer } = require('electron');
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld('electronAPI', {
-  // System tray quick actions
-  onQuickCameraTest: (callback) => {
-    ipcRenderer.on('quick-camera-test', callback);
-  },
-  onQuickMicrophoneTest: (callback) => {
-    ipcRenderer.on('quick-microphone-test', callback);
-  },
-  
   // Window controls
   minimizeToTray: () => {
     ipcRenderer.send('minimize-to-tray');
   },
-  
+  maximizeWindow: () => {
+    ipcRenderer.send('maximize-window');
+  },
+  closeWindow: () => {
+    ipcRenderer.send('close-window');
+  },
   // Remove listeners
   removeAllListeners: (channel) => {
     ipcRenderer.removeAllListeners(channel);

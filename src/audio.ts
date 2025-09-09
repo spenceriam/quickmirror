@@ -24,15 +24,27 @@ export class AudioManager {
             this.stream = await navigator.mediaDevices.getUserMedia(constraints);
             
             this.audioContext = new AudioContext();
+            
+            // Resume audio context if suspended (required by modern browsers)
+            if (this.audioContext.state === 'suspended') {
+                await this.audioContext.resume();
+            }
+            
             this.analyser = this.audioContext.createAnalyser();
             this.microphone = this.audioContext.createMediaStreamSource(this.stream);
             
             this.microphone.connect(this.analyser);
             this.analyser.fftSize = 256;
+            this.analyser.smoothingTimeConstant = 0.8;
             this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
             
             this.currentDeviceId = deviceId || null;
             this.startVisualization();
+            
+            console.log('Audio context initialized:', {
+                state: this.audioContext.state,
+                deviceId: this.currentDeviceId
+            });
             
         } catch (error: any) {
             console.error('Audio access failed:', error);
@@ -48,27 +60,38 @@ export class AudioManager {
     }
 
     private startVisualization(): void {
-        if (!this.analyser || !this.dataArray) return;
+        if (!this.analyser || !this.dataArray) {
+            console.warn('Audio visualization: missing analyser or dataArray');
+            return;
+        }
 
+        console.log('Starting audio visualization...');
+        
         const updateLevel = () => {
             if (!this.analyser || !this.dataArray) return;
 
             this.analyser.getByteFrequencyData(this.dataArray);
             
-            // Calculate average amplitude
+            // Calculate RMS (Root Mean Square) for more accurate level detection
             let sum = 0;
             for (let i = 0; i < this.dataArray.length; i++) {
-                sum += this.dataArray[i];
+                sum += this.dataArray[i] * this.dataArray[i];
             }
-            const average = sum / this.dataArray.length;
+            const rms = Math.sqrt(sum / this.dataArray.length);
             
-            // Convert to percentage (0-100)
-            const level = Math.min(100, Math.max(0, (average / 128) * 100));
+            // Convert to percentage (0-100) with better scaling
+            const level = Math.min(100, Math.max(0, (rms / 128) * 200));
             
             // Store current audio level
             this.currentAudioLevel = level;
             
+            // Update progress bar if it exists (legacy support)
             this.updateProgressBar(level);
+            
+            // Debug logging (remove after testing)
+            if (Math.random() < 0.001) { // Log occasionally to avoid spam
+                console.log('Audio level:', level.toFixed(1));
+            }
             
             this.animationId = requestAnimationFrame(updateLevel);
         };
