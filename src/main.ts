@@ -492,54 +492,5 @@ function showContextMenu(x: number, y: number): void {
   }, 0);
 }
 
-// Anchor state management functions
-async function initializeAnchorState(): Promise<void> {
-  if (!window.electronAPI) return;
-  
-  try {
-    // Get initial anchor state from main process
-    isAnchored = await window.electronAPI.getAnchorState();
-    updateAnchorUI();
-    
-    // Listen for anchor state changes
-    window.electronAPI.onAnchorStateChanged((anchored: boolean) => {
-      isAnchored = anchored;
-      updateAnchorUI();
-    });
-  } catch (error) {
-    console.error('Failed to initialize anchor state:', error);
-  }
-}
-
-async function toggleAnchorState(): Promise<void> {
-  if (!window.electronAPI) return;
-  
-  try {
-    const newState = !isAnchored;
-    window.electronAPI.setAnchorState(newState);
-    // State will be updated via the onAnchorStateChanged callback
-  } catch (error) {
-    console.error('Failed to toggle anchor state:', error);
-  }
-}
-
-function updateAnchorUI(): void {
-  const appContainer = document.getElementById('app-container');
-  const anchorButton = document.getElementById('anchor-btn');
-  
-  if (!appContainer || !anchorButton) return;
-  
-  if (isAnchored) {
-    // Window is anchored
-    anchorButton.classList.add('anchored');
-    anchorButton.title = 'Unanchor from bottom-right corner';
-    appContainer.classList.add('anchored');
-  } else {
-    // Window is not anchored
-    anchorButton.classList.remove('anchored');
-    anchorButton.title = 'Anchor to bottom-right corner';
-    appContainer.classList.remove('anchored');
-  }
-}
 
 console.log('QuickMirror main.ts loaded with Electron support');
